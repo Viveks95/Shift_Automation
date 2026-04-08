@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Roster Pro</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div id="loginPage" class="login">
+  <h2>Login</h2>
+  <input type="text" id="user" placeholder="Username">
+  <input type="password" id="pass" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="app" style="display:none">
+
+<h2>Roster Pro Dashboard</h2>
+
+<div class="controls">
+  <input type="date" id="startDate">
+  <button onclick="initRoster()">Start</button>
+  <button onclick="nextCycle()">Next 2 Weeks</button>
+  <button onclick="saveRoster()">Save</button>
+  <button onclick="exportCSV()">Export</button>
+
+  <input type="month" id="monthPicker">
+  <button onclick="generateDashboard()">Monthly</button>
+</div>
+
+<div id="summary" class="summary"></div>
+
+<div class="table-container">
+  <table id="table"></table>
+</div>
+
+<canvas id="chart" height="100"></canvas>
+
+<div id="dashboard"></div>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
