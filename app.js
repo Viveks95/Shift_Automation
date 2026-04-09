@@ -1,4 +1,4 @@
-let agents = ["Vivek","Nandini","Aishya","Akshay","John","Melvin","Anabel"];
+let agents = [];
 let roster = {};
 let startDate;
 const days = 14;
@@ -11,9 +11,26 @@ function login(){
   if(u==="admin" && p==="admin"){
     document.getElementById("loginPage").style.display="none";
     document.getElementById("app").style.display="block";
+
+    loadAgents();
     loadLast();
   } else {
     alert("Invalid login");
+  }
+}
+
+/* LOAD AGENTS */
+function loadAgents(){
+  let saved = localStorage.getItem("agents");
+
+  if(saved){
+    agents = JSON.parse(saved);
+  } else {
+    let input = prompt("Enter agent names (comma separated)");
+    if(!input) return;
+
+    agents = input.split(",").map(a=>a.trim());
+    localStorage.setItem("agents", JSON.stringify(agents));
   }
 }
 
@@ -95,6 +112,7 @@ function render(){
     onEnd: e=>{
       let item=agents.splice(e.oldIndex,1)[0];
       agents.splice(e.newIndex,0,item);
+      localStorage.setItem("agents", JSON.stringify(agents));
     }
   });
 
@@ -122,7 +140,7 @@ function fill(agent){
   render();
 }
 
-/* ✅ FIXED NEXT 2 WEEKS */
+/* NEXT */
 function nextCycle(){
 
   startDate.setDate(startDate.getDate()+14);
@@ -153,6 +171,8 @@ function nextCycle(){
   });
 
   roster=newRoster;
+
+  localStorage.setItem("agents", JSON.stringify(agents));
 
   render();
 }
@@ -216,15 +236,28 @@ function drawChart(){
   });
 }
 
-/* ✅ FIXED EXCEL EXPORT WITH COLORS */
+/* 🔥 MONTH BASED EXCEL EXPORT */
 function exportExcel(){
 
-  let table = "<table border='1'>";
+  if(!startDate || !roster){
+    alert("No data to export");
+    return;
+  }
 
   const mNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const dNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-  table += "<tr><th>Agent</th>";
+  let monthName = mNames[startDate.getMonth()];
+  let year = startDate.getFullYear();
+
+  let table = `
+  <html xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="UTF-8"></head>
+  <body>
+  <table border="1">
+  <tr><th>Agent</th>`;
 
   for(let i=0;i<days;i++){
     let d=new Date(startDate);
@@ -259,13 +292,15 @@ function exportExcel(){
     table += "</tr>";
   });
 
-  table += "</table>";
+  table += "</table></body></html>";
 
   let blob = new Blob([table], {type:"application/vnd.ms-excel"});
   let url = URL.createObjectURL(blob);
 
   let a = document.createElement("a");
   a.href = url;
-  a.download = "roster.xls";
+  a.download = `${monthName}_${year}_Roster.xls`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
