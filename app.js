@@ -87,7 +87,7 @@ function render(){
         html+=`<td class="wo">WO</td>`;
       } else {
         html+=`<td>
-        <select class="${val.toLowerCase()}" onchange="update('${a}',${i},this.value)">
+        <select onchange="update('${a}',${i},this.value)">
         <option ${val=="N"?"selected":""}>N</option>
         <option ${val=="M"?"selected":""}>M</option>
         <option ${val=="C"?"selected":""}>C</option>
@@ -117,13 +117,11 @@ function render(){
   });
 
   updateSummary();
-  drawChart();
 }
 
 /* UPDATE */
 function update(a,i,val){
   roster[a][i]=val;
-  render();
 }
 
 /* FILL */
@@ -171,9 +169,6 @@ function nextCycle(){
   });
 
   roster=newRoster;
-
-  localStorage.setItem("agents", JSON.stringify(agents));
-
   render();
 }
 
@@ -209,98 +204,70 @@ function updateSummary(){
   });
 
   document.getElementById("summary").innerHTML=`
-  <div class="card">Night ${n}</div>
-  <div class="card">Morning ${m}</div>
-  <div class="card">Core ${c}</div>`;
+  <div class="card">N ${n}</div>
+  <div class="card">M ${m}</div>
+  <div class="card">C ${c}</div>`;
 }
 
-/* CHART */
-function drawChart(){
-
-  let n=0,m=0,c=0;
-
-  agents.forEach(a=>{
-    roster[a].forEach(v=>{
-      if(v=="N") n++;
-      if(v=="M") m++;
-      if(v=="C") c++;
-    });
-  });
-
-  new Chart(document.getElementById("chart"), {
-    type:"bar",
-    data:{
-      labels:["Night","Morning","Core"],
-      datasets:[{data:[n,m,c]}]
-    }
-  });
-}
-
-/* 🔥 MONTH BASED EXCEL EXPORT */
+/* ✅ FINAL EXPORT (WORKING) */
 function exportExcel(){
 
-  if(!startDate || !roster){
-    alert("No data to export");
-    return;
-  }
+  try {
 
-  const mNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const dNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    if(!startDate){
+      alert("Please click Start first");
+      return;
+    }
 
-  let monthName = mNames[startDate.getMonth()];
-  let year = startDate.getFullYear();
+    let html = "<table border='1'><tr><th>Agent</th>";
 
-  let table = `
-  <html xmlns:o="urn:schemas-microsoft-com:office:office"
-        xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="http://www.w3.org/TR/REC-html40">
-  <head><meta charset="UTF-8"></head>
-  <body>
-  <table border="1">
-  <tr><th>Agent</th>`;
+    const mNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const dNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-  for(let i=0;i<days;i++){
-    let d=new Date(startDate);
-    d.setDate(d.getDate()+i);
-
-    table += `<th>${dNames[d.getDay()]} ${d.getDate()} ${mNames[d.getMonth()]}</th>`;
-  }
-
-  table += "</tr>";
-
-  agents.forEach(a=>{
-    table += `<tr><td><b>${a}</b></td>`;
-
-    roster[a].forEach((val,i)=>{
-
+    for(let i=0;i<days;i++){
       let d=new Date(startDate);
       d.setDate(d.getDate()+i);
 
-      let color="";
+      html += `<th>${dNames[d.getDay()]} ${d.getDate()} ${mNames[d.getMonth()]}</th>`;
+    }
 
-      if(d.getDay()==0 || d.getDay()==6){
-        val="WO";
-        color="background:#ff8c00;";
+    html += "</tr>";
+
+    agents.forEach(a=>{
+      html += `<tr><td>${a}</td>`;
+
+      for(let i=0;i<days;i++){
+        let d=new Date(startDate);
+        d.setDate(d.getDate()+i);
+
+        let val = roster[a][i];
+
+        if(d.getDay()==0||d.getDay()==6){
+          val="WO";
+        }
+
+        html += `<td>${val}</td>`;
       }
-      else if(val==="N") color="background:#f4b183;";
-      else if(val==="M") color="background:#c6e0b4;";
-      else if(val==="C") color="background:#bdd7ee;";
 
-      table += `<td style="${color}">${val}</td>`;
+      html += "</tr>";
     });
 
-    table += "</tr>";
-  });
+    html += "</table>";
 
-  table += "</table></body></html>";
+    let file = new Blob([html], {type: "application/vnd.ms-excel"});
 
-  let blob = new Blob([table], {type:"application/vnd.ms-excel"});
-  let url = URL.createObjectURL(blob);
+    let url = URL.createObjectURL(file);
 
-  let a = document.createElement("a");
-  a.href = url;
-  a.download = `${monthName}_${year}_Roster.xls`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+    let link = document.createElement("a");
+    link.href = url;
+    link.download = "Roster.xls";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch(e){
+    alert("Export failed: " + e);
+    console.log(e);
+  }
 }
